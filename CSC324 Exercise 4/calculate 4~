@@ -1,0 +1,53 @@
+#lang racket
+(define (symbol-finder fn)
+  (cond
+    [(equal? fn '+) +]
+    [(equal? fn '-) -]
+    [(equal? fn '*) *]
+    [(equal? fn '/) /]
+    [(equal? fn '=) =]
+    [(equal? fn '>) >]
+    [(equal? fn '<) <]
+  
+    ))
+
+(define (eval-calc expr env)
+  (cond
+    [(null? expr) 0]
+    [(number? expr) expr]
+    [(symbol? expr) (hash-ref env expr)]
+    [else (let([fn (first expr)] [rn (rest expr)])
+            (cond
+              [(equal? fn 'let*)
+               (cond
+                 [(and(equal? (length (first rn)) 1) (number? (cadr (first (first rn)))))
+                  (eval-calc (second rn) (hash-set env (car (first (first rn))) (cadr (first (first rn)))))]
+                 [(equal? (length (first rn)) 1) (eval-calc (second rn) (hash-set env (car (first (first rn))) (eval-calc (cadr (first (first rn))) env)))]
+                 [(and(equal? (length (first rn)) 2) (number? (cadr (first (first rn)))) (number? (cadr (second (first rn)))))
+                  (eval-calc (second rn) (hash-set* env (car (first (first rn))) (cadr (first (first rn))) (car (second (first rn))) (cadr (second (first rn)))))
+                  ]
+                 [(and(equal? (length (first rn)) 2) (number? (cadr (second (first rn)))))
+                  (eval-calc (second rn) (hash-set* env (car (first (first rn))) (eval-calc (cadr (first (first rn))) env) (car (second (first rn))) (cadr (second (first rn)))))
+                  ]
+                 [(and(equal? (length (first rn)) 2) (number? (cadr (first (first rn)))))
+                  (eval-calc (second rn) (hash-set* env (car (first (first rn))) (cadr (first (first rn))) (car (second (first rn))) (eval-calc (cadr (second (first rn))) env)))
+                  ]
+                 [(and(equal? (length (first rn)) 2))
+                  (eval-calc (second rn) (hash-set* env (car (first (first rn))) (eval-calc (cadr (first (first rn))) env) (car (second (first rn))) (eval-calc (cadr (second (first rn))) env)))
+                  ]
+                 )]
+              [(equal? fn 'if)
+               (if((symbol-finder (first (first rn)))
+                   (eval-calc (second (first rn)) env) (eval-calc (third (first rn)) env)) (eval-calc (second rn) env) (eval-calc (third rn) env))]
+              [else
+               (cond
+                 [(and (number? (first rn))(number? (second rn))) ((symbol-finder fn) (first rn) (second rn))]
+                 [(and (number? (first rn))(symbol? (second rn))) ((symbol-finder fn) (first rn) (eval-calc (second rn) env))]
+                 [(and (symbol? (first rn))(number? (second rn))) ((symbol-finder fn) (eval-calc (first rn) env) (second rn))]
+                 [(and (symbol? (first rn))(symbol? (second rn))) ((symbol-finder fn) (eval-calc (first rn) env) (eval-calc (second rn) env))]
+                 [(and (symbol? (first rn))(list? (second rn))) ((symbol-finder fn) (eval-calc (first rn) env) (eval-calc (second rn) env))]
+                 [(and (list? (first rn))(symbol? (second rn))) ((symbol-finder fn) (eval-calc (first rn) env) (eval-calc (second rn) env))]
+                 [(and (number? (first rn))(list? (second rn))) ((symbol-finder fn) (first rn) (eval-calc (second rn) env))]
+                 [(and (list? (first rn))(number? (second rn))) ((symbol-finder fn) (eval-calc (first rn) env) (second rn))]
+                 [(and (list? (first rn))(list? (second rn))) ((symbol-finder fn) (eval-calc (first rn) env) (eval-calc (second rn) env))]
+                 )]))]))

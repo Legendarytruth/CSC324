@@ -1,0 +1,7 @@
+#lang racket
+(define (calculate expr)
+  (cond
+    [(null? expr) 0]
+    [else(let ([fn (first expr)] [rn (calculate(rest expr))])
+(if (equal? fn 'if) (print fn) 0
+           ))]))

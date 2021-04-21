@@ -1,0 +1,8 @@
+#lang racket
+
+(define (calculate expr)
+(cond
+  [(null? expr) 0]
+  [else ]
+
+))
